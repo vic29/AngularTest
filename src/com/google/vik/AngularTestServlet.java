@@ -31,37 +31,21 @@ import com.google.api.services.drive.model.File;
 @SuppressWarnings("serial")
 public class AngularTestServlet extends HttpServlet {
 
-	private static final String CLIENT_SECRET_JSON = "client_secrets.json";
-	private static final List<String> SCOPES = Arrays.asList(DriveScopes.DRIVE);
-	private static final String REDIRECT_URI = "http://localhost:8888";
+	private GoogleCredentialHandler credentialHandler;
 
-	private GoogleAuthorizationCodeFlow flow;
 	private Credential storedCredential;
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 
-		String code = null;
-		if (storedCredential != null)
-			code = storedCredential.getRefreshToken();
-		else
-			code = req.getParameter("code");
+		credentialHandler = new GoogleCredentialHandler(req, resp);
+		
 
-		if (code == null) {
-			flow = getFlow();
-
-			String url = flow.newAuthorizationUrl()
-					.setRedirectUri(REDIRECT_URI).build();
-			System.out
-					.println("Please open the following URL in your browser then type the authorization code:");
-			System.out.println("  " + url);
-			resp.getWriter().print(url);
-		} else {
 			HttpTransport httpTransport = new NetHttpTransport();
 			JsonFactory jsonFactory = new JacksonFactory();
 			// Create a new authorized API client
 			Drive service = new Drive.Builder(httpTransport, jsonFactory,
-					getCredential(code)).build();
+					credentialHandler.getCredential()).build();
 
 			File file = service.files()
 					.get("1uuNXbO2s-YCGUtiIpeIkdENOMFKMfi8knBaHkVF1ypM")
@@ -105,7 +89,7 @@ public class AngularTestServlet extends HttpServlet {
 			}
 			resp.getWriter().print(sb.toString());
 
-		}
+		
 	}
 
 	/**
@@ -158,52 +142,5 @@ public class AngularTestServlet extends HttpServlet {
 
 	}
 
-	private GoogleAuthorizationCodeFlow getFlow() throws IOException {
-		if (flow == null) {
-			HttpTransport httpTransport = new NetHttpTransport();
-			JacksonFactory jsonFactory = new JacksonFactory();
-
-			GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
-					jsonFactory, getResourceAsStream(CLIENT_SECRET_JSON));
-			flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport,
-					jsonFactory, clientSecrets, SCOPES)
-					.setAccessType("offline").setApprovalPrompt("force")
-					.build();
-		}
-		return flow;
-	}
-
-	private Reader getResourceAsStream(String name)
-			throws FileNotFoundException {
-		InputStream inputStream = new FileInputStream(name);
-		return new InputStreamReader(inputStream);
-	}
-
-	/**
-	 * Exchange an authorization code for OAuth 2.0 credentials.
-	 * 
-	 * @param authorizationCode
-	 *            Authorization code to exchange for OAuth 2.0 credentials.
-	 * @return OAuth 2.0 credentials.
-	 * @throws CodeExchangeException
-	 *             An error occurred.
-	 */
-	private Credential exchangeCode(String authorizationCode) {
-		try {
-			GoogleAuthorizationCodeFlow flow = getFlow();
-			GoogleTokenResponse response = flow
-					.newTokenRequest(authorizationCode)
-					.setRedirectUri(REDIRECT_URI).execute();
-			return flow.createAndStoreCredential(response, null);
-		} catch (IOException e) {
-			System.err.println("An error occurred: " + e);
-			return null;
-		}
-	}
-
-	private Credential getCredential(String authorizationCode) {
-		if (storedCredential == null)
-			storedCredential = this.exchangeCode(authorizationCode);
-		return storedCredential;
-	}
+	
 }
