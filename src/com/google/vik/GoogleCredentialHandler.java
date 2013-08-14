@@ -1,12 +1,20 @@
 package com.google.vik;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson.JacksonFactory;
+import com.google.api.services.drive.DriveScopes;
 
 public class GoogleCredentialHandler {
 
@@ -18,36 +26,51 @@ public class GoogleCredentialHandler {
 	private String refreshToken;
 	private Credential credential;
 
-	public GoogleCredentialHandler(HttpServletRequest req, HttpServletResponse resp){
+	public GoogleCredentialHandler(HttpServletRequest req,
+			HttpServletResponse resp) {
+
 		String authenticationCode = null;
+
 		if (refreshToken != null)
 			authenticationCode = refreshToken;
 		else {
 			authenticationCode = req.getParameter("code");
 		}
-		
+
 		if (authenticationCode == null) {
 			flow = getFlow();
-			resp.getWriter().print(flow.newAuthorizationUrl()
-					.setRedirectUri(REDIRECT_URI).build(););
-		} 
-		else {
-			credential = this.exchangeCode(authorizationCode);
-			refreshToken = credendial.getRefreshToken();
+			try {
+				resp.getWriter().print(
+						flow.newAuthorizationUrl().setRedirectUri(REDIRECT_URI)
+								.build());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			credential = this.exchangeCode(authenticationCode);
+			refreshToken = credential.getRefreshToken();
 		}
 	}
 
-	private GoogleAuthorizationCodeFlow getFlow() throws IOException {
+	private GoogleAuthorizationCodeFlow getFlow() {
 		if (flow == null) {
-			HttpTransport httpTransport = new NetHttpTransport();
-			JacksonFactory jsonFactory = new JacksonFactory();
+			try {
+				HttpTransport httpTransport = new NetHttpTransport();
+				JacksonFactory jsonFactory = new JacksonFactory();
 
-			GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
-					jsonFactory, FileUtil.getResourceAsStream(CLIENT_SECRET_JSON));
-			flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport,
-					jsonFactory, clientSecrets, SCOPES)
-					.setAccessType("offline").setApprovalPrompt("force")
-					.build();
+				GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(
+						jsonFactory,
+						FileUtil.getResourceAsStream(CLIENT_SECRET_JSON));
+
+				flow = new GoogleAuthorizationCodeFlow.Builder(httpTransport,
+						jsonFactory, clientSecrets, SCOPES)
+						.setAccessType("offline").setApprovalPrompt("force")
+						.build();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		return flow;
 	}
@@ -65,7 +88,7 @@ public class GoogleCredentialHandler {
 		}
 	}
 
-	private Credential getCredential() {
+	public Credential getCredential() {
 		return credential;
 	}
 }

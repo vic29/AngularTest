@@ -1,23 +1,15 @@
 package com.google.vik;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
@@ -25,7 +17,6 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 
 @SuppressWarnings("serial")
@@ -39,57 +30,54 @@ public class AngularTestServlet extends HttpServlet {
 			throws IOException {
 
 		credentialHandler = new GoogleCredentialHandler(req, resp);
-		
 
-			HttpTransport httpTransport = new NetHttpTransport();
-			JsonFactory jsonFactory = new JacksonFactory();
-			// Create a new authorized API client
-			Drive service = new Drive.Builder(httpTransport, jsonFactory,
-					credentialHandler.getCredential()).build();
+		HttpTransport httpTransport = new NetHttpTransport();
+		JsonFactory jsonFactory = new JacksonFactory();
+		// Create a new authorized API client
+		Drive service = new Drive.Builder(httpTransport, jsonFactory,
+				credentialHandler.getCredential()).build();
 
-			File file = service.files()
-					.get("1uuNXbO2s-YCGUtiIpeIkdENOMFKMfi8knBaHkVF1ypM")
-					.execute();
+		File file = service.files()
+				.get("1uuNXbO2s-YCGUtiIpeIkdENOMFKMfi8knBaHkVF1ypM").execute();
 
-			// // Insert a file
-			// File body = new File();
-			// body.setTitle("My document");
-			// body.setDescription("A test document");
-			// body.setMimeType("text/plain");
-			//
-			// java.io.File fileContent = new java.io.File("document.txt");
-			// FileContent mediaContent = new FileContent("text/plain",
-			// fileContent);
-			//
-			// File file = service.files().insert(body, mediaContent).execute();
-			//
+		// // Insert a file
+		// File body = new File();
+		// body.setTitle("My document");
+		// body.setDescription("A test document");
+		// body.setMimeType("text/plain");
+		//
+		// java.io.File fileContent = new java.io.File("document.txt");
+		// FileContent mediaContent = new FileContent("text/plain",
+		// fileContent);
+		//
+		// File file = service.files().insert(body, mediaContent).execute();
+		//
 
-			BufferedReader br = null;
-			StringBuilder sb = new StringBuilder();
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
 
-			String line;
-			try {
+		String line;
+		try {
 
-				br = new BufferedReader(new InputStreamReader(
-						this.downloadFile(service, file)));
-				while ((line = br.readLine()) != null) {
-					sb.append(line);
-				}
+			br = new BufferedReader(new InputStreamReader(this.downloadFile(
+					service, file)));
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
 
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				if (br != null) {
-					try {
-						br.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
-			resp.getWriter().print(sb.toString());
+		}
+		resp.getWriter().print(sb.toString());
 
-		
 	}
 
 	/**
@@ -142,5 +130,4 @@ public class AngularTestServlet extends HttpServlet {
 
 	}
 
-	
 }
